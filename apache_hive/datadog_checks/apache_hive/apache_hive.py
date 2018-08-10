@@ -2,7 +2,7 @@
 # All rights reserved
 # Licensed under Simplified BSD License (see LICENSE)
 
-
+#gets the appid and ambari_api_url from the config file(also get the hostname, devic_name and tags if configured). It then uses the ambari_api_url to request the ambari metric api for a list of all ambari metrics. It then uses the appid to only record the metrics relating to hive. then it uses another ambari metic api call on each hive metric to get that metrics value at the time of request
 import requests
 import json
 
@@ -12,6 +12,7 @@ from hashlib import md5
 
 class apache_hive(AgentCheck):
     hive_metrics={}
+    #sends the check
     def check(self, instance):
         APPID=instance.get('APPID')
         ambari_api_url=instance.get('ambari_api_url')
@@ -30,10 +31,12 @@ class apache_hive(AgentCheck):
             else:
                 self.count(metricName, data, tags=tags, hostname=hostname, device_name=device_name)
         pass
+    # makes an ambari metric api request for a list of all ambari metrics 
     def getListOfHiveMetrics(self,url):
         data=self.httpRequest('http://'+url+'/ws/v1/timeline/metrics/metadata')
         for metrics in data['hiveserver2']:
            self.hive_metrics[metrics['metricname']] = metrics['type']
+    # makes an ambari metric api request for the value of a specific metric
     def getMetric(self, url,metricname, APPID):
         data=self.httpRequest('http://'+url+'/ws/v1/timeline/metrics?metricNames='+metricname+'&appId='+APPID)
         metrics = data['metrics']
@@ -43,6 +46,7 @@ class apache_hive(AgentCheck):
         else:
           self.log.info('apache_hive '+metricname+' is empty!')
           return None
+    #creates an http request
     def httpRequest(self,url):
        aggregation_key = md5(url).hexdigest()
        try:
@@ -55,6 +59,7 @@ class apache_hive(AgentCheck):
          return
        else:
          return r.json()
+    # creates an event if the http request fails
     def timeout_event(self, url, timeout, aggregation_key):
         self.event({
             'timestamp': int(time.time()),
@@ -63,7 +68,7 @@ class apache_hive(AgentCheck):
             'msg_text': '%s timed out after %s seconds.' % (url, timeout),
             'aggregation_key': aggregation_key
         })
-
+    # creates an event if the http request does not return 200
     def status_code_event(self, url, r, aggregation_key):
         self.event({
             'timestamp': int(time.time()),

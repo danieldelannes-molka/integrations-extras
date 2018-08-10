@@ -1,7 +1,7 @@
 # (C) Datadog, Inc. 2010-2017
 # All rights reserved
 # Licensed under Simplified BSD License (see LICENSE)
-
+# A test file that tests the integration(there are 2 parts)
 import pytest
 import subprocess
 import os
@@ -10,7 +10,7 @@ import time
 from datadog_checks.apache_hive import apache_hive
 from datadog_checks.errors import CheckException
 from datadog_checks.utils.common import get_docker_hostname
-
+# tests the integration with sample config files
 def test_check(aggregator):
     c = apache_hive('apache_hive', {}, {}, None)
 
@@ -32,7 +32,7 @@ def test_check(aggregator):
     c.check({'ambari_api_url': 'localhost:6188','APPID': 'hiveserver2','device_name':'mydevice'})
 
     c.check({'ambari_api_url': 'localhost:6188','APPID': 'hiveserver2'})
-
+#datadog tests that uses docker to test the integration
 @pytest.mark.integration
 def test_service_check(aggregator):
     c = apache_hive('apache_hive', {}, {}, None)
